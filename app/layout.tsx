@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     if (!plan) {
       console.error("No content returned from OpenAI");
       return NextResponse.json(
-        { error: "No content returned from OpenAI" },
+        { error: "No conttent returned from OpenAI" },
         { status: 500 }
       );
     }
