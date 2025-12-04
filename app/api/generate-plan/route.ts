@@ -1,39 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const prompt =
-      body.prompt || "Generate a simple AI workout plan for 7 days";
+    const prompt = body.prompt || "Generate a simple AI workout plan";
 
-    const model = "meta-llama/Llama-2-7b-chat-hf";
-    const apiUrl = `https://api-inference.huggingface.co/models/${model}`;
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("GEMINI_API_KEY not set");
+      return NextResponse.json(
+        { error: "GEMINI_API_KEY not set" },
+        { status: 500 }
+      );
+    }
 
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        inputs: prompt,
-        parameters: { max_new_tokens: 300 },
-      }),
-    });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-    const data = await response.json();
-    console.log("HuggingFace raw response:", data);
-
-    const plan =
-      typeof data === "string"
-        ? data
-        : Array.isArray(data) && data[0]?.generated_text
-        ? data[0].generated_text
-        : null;
+    const result = await model.generateContent(prompt);
+    const plan = result.response.text();
 
     if (!plan) {
-      console.error("No content returned from HuggingFace", data);
+      console.error("No content returned from Gemini");
       return NextResponse.json(
-        { error: "No content returned from HuggingFace", data },
+        { error: "No content returned from Gemini" },
         { status: 500 }
       );
     }
@@ -41,7 +31,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ plan });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
-    console.error("HuggingFace error:", err.message);
+    console.error("Gemini error:", err.message);
     return NextResponse.json(
       { error: "fail to generate plan", details: err.message },
       { status: 500 }
