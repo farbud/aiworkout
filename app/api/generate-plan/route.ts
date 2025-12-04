@@ -1,41 +1,41 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { gender, age, height, weight, goal, level, equipment, days } = body;
+    const prompt = body.prompt || "Generate a simple AI workout plan";
 
-    const prompt = `
-You are a professional fitness coach & nutrition expert.
-Generate a weekly workout & nutrition plan in STRICT JSON ONLY.
-User profile:
-- Gender: ${gender}
-- Age: ${age}
-- Height: ${height} cm
-- Weight: ${weight} kg
-- Goal: ${goal}
-- Level: ${level}
-- Equipment: ${equipment.join(", ")}
-- Days per week: ${days}
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY not set");
+      return NextResponse.json(
+        { error: "OPENAI_API_KEY not set" },
+        { status: 500 }
+      );
+    }
 
-Return JSON ONLY with days, workout, nutrition, weekly_summary, general_tips
-`;
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4",
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
     });
 
-    const data = completion.choices[0].message.content;
-    return NextResponse.json(JSON.parse(data!));
-  } catch (error) {
-    console.error(error);
+    const plan = completion.choices?.[0]?.message?.content;
+    if (!plan) {
+      console.error("No content returned from OpenAI");
+      return NextResponse.json(
+        { error: "No content returned from OpenAI" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ plan });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    console.error("OpenAI error:", err.message);
     return NextResponse.json(
-      { error: "Failed to generate plan." },
+      { error: "fail to generate plan", details: err.message },
       { status: 500 }
     );
   }
