@@ -2,8 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePlan } from "@/context/PlanContext";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import { usePlan } from "../../context/PlanContext";
+import LoadingSpinner from "../../components/LoadingSpinner";
 import PlanCard from "../../components/PlanCart";
 import { motion } from "framer-motion";
 

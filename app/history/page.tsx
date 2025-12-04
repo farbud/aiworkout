@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { usePlan } from "@/context/PlanContext";
+import { usePlan } from "../../context/PlanContext";
 import PlanCard from "../../components/PlanCart";
 import { motion } from "framer-motion";
 
